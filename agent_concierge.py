@@ -53,6 +53,27 @@ def get_user_context(user_id: str) -> str:
                     "proactive_alert": "expiring_card",
                     "details": f"O cartão {pm['brand']} com final {pm['last4']} (expirado em {expiry_month}/{expiry_year}) não é mais válido."
                 })
+
+    # 3. Verifica por faturas de Boleto/PIX prestes a vencer
+    preferred_pm_id = user.get("preferred_payment_method_id")
+    preferred_pm = next((pm for pm in user["payment_methods"] if pm["id"] == preferred_pm_id), None)
+
+    if preferred_pm and preferred_pm["type"] in ["boleto", "pix"]:
+        for sub in user["subscriptions"]:
+            next_billing_date = datetime.strptime(sub["next_billing_date"], "%Y-%m-%d").date()
+            days_until_due = (next_billing_date - datetime.now().date()).days
+
+            if 0 <= days_until_due <= 2:
+                payment_link = ""
+                if preferred_pm["type"] == "boleto":
+                    payment_link = f"https://pagamentos.bemobi.com/boleto/{user_id}/{sub['service_id']}"
+                elif preferred_pm["type"] == "pix":
+                    payment_link = f"00020126580014br.gov.bcb.pix0136...{sub['service_id']}" # PIX Copia e Cola simbólico
+
+                return json.dumps({
+                    "proactive_alert": "billing_due",
+                    "details": f"Sua fatura do serviço '{sub['service_name']}' vence em {days_until_due} dia(s). Link para pagamento: {payment_link}"
+                })
     return "Nenhum alerta proativo imediato."
 
 def get_personal_info(user_id: str) -> str:
