@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 
 # --- 1. Funções de Interação com a Base de Dados (customer_profile.json) ---
 
@@ -69,6 +70,66 @@ class GuardianAgent:
         if score >= 40:
             return "Médio"
         return "Baixo"
+
+    def _luhn_check(self, card_number: str) -> bool:
+        """Verifica se um número de cartão é válido usando o Algoritmo de Luhn."""
+        try:
+            digits = [int(d) for d in card_number]
+            checksum = 0
+            for i, digit in enumerate(reversed(digits)):
+                if i % 2 == 1:
+                    doubled_digit = digit * 2
+                    if doubled_digit > 9:
+                        doubled_digit -= 9
+                    checksum += doubled_digit
+                else:
+                    checksum += digit
+            return checksum % 10 == 0
+        except (ValueError, TypeError):
+            return False
+
+    def validate_new_card(self, card_details: dict) -> dict:
+        """Valida um novo cartão de crédito usando verificações simuladas."""
+        print("🤖 Guardian: Validando novo cartão.")
+        card_number = card_details.get("number", "").replace(" ", "")
+        expiry_date = card_details.get("expiry_date") # "YYYY-MM"
+        cvv = card_details.get("cvv")
+
+        reasons = []
+        is_valid = True
+
+        # 1. Verificação do Algoritmo de Luhn
+        if not self._luhn_check(card_number):
+            is_valid = False
+            reasons.append("O número do cartão é inválido (falha na verificação do algoritmo de Luhn).")
+
+        # 2. Verificação da Data de Validade
+        if expiry_date:
+            try:
+                expiry_year, expiry_month = map(int, expiry_date.split('-'))
+                first_day_of_expiry_month = datetime(expiry_year, expiry_month, 1)
+                effective_expiry_date = (first_day_of_expiry_month + timedelta(days=32)).replace(day=1)
+                if datetime.now() >= effective_expiry_date:
+                    is_valid = False
+                    reasons.append("O cartão informado já está expirado.")
+            except (ValueError, IndexError):
+                is_valid = False
+                reasons.append("Formato da data de validade inválido. Use AAAA-MM.")
+        else:
+            is_valid = False
+            reasons.append("Data de validade não fornecida.")
+
+        # 3. Verificação do CVV (simples)
+        if not (cvv and 3 <= len(cvv) <= 4 and cvv.isdigit()):
+            is_valid = False
+            reasons.append("CVV inválido.")
+
+        if is_valid:
+            print("🤖 Guardian: Cartão validado com sucesso.")
+            return {"is_valid": True, "message": "Cartão validado com sucesso."}
+        else:
+            print(f"🤖 Guardian: Falha na validação do cartão. Motivos: {reasons}")
+            return {"is_valid": False, "reasons": reasons}
 
 # Factory para criar uma instância do agente
 def create_guardian_agent():

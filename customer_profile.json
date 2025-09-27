@@ -6,17 +6,13 @@
             "address": "Rua Santa Rosa, 20",
             "signup_date": "2023-01-15T10:30:00Z"
         },
-        "proactive_alert": {
-            "type": "blocked_transaction",
-            "details": "Detectamos e bloqueamos uma tentativa de compra suspeita no valor de R$ 850,00 originada em Kiev, Ucrânia. Sua conta está segura."
-        },
         "payment_methods": [
             {
                 "id": "cc_visa_1234",
                 "type": "credit_card",
                 "brand": "Visa",
                 "last4": "1234",
-                "expiry_date": "2025-10",
+                "expiry_date": "2024-08",
                 "added_date": "2023-01-15T10:30:00Z"
             },
             {
@@ -26,6 +22,14 @@
                 "last4": "5678",
                 "expiry_date": "2027-08",
                 "added_date": "2024-05-20T15:00:00Z"
+            },
+            {
+                "id": "cc_elo_4844",
+                "type": "credit_card",
+                "brand": "Elo",
+                "last4": "4844",
+                "expiry_date": "2028-12",
+                "added_date": "2025-09-27T19:02:36.151639"
             }
         ],
         "subscriptions": [

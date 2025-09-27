@@ -41,12 +41,17 @@ def get_user_context(user_id: str) -> str:
     # 2. Verifica por outros contextos, como cartões expirando
     for pm in user["payment_methods"]:
         if pm["type"] == "credit_card":
+            # Um cartão é válido até o último dia do mês de expiração.
+            # Ele expira no primeiro dia do mês seguinte.
             expiry_year, expiry_month = map(int, pm["expiry_date"].split('-'))
-            next_month = datetime.now() + timedelta(days=30)
-            if expiry_year == next_month.year and expiry_month == next_month.month:
+            # Calcula o primeiro dia do mês seguinte à expiração
+            first_day_of_expiry_month = datetime(expiry_year, expiry_month, 1)
+            effective_expiry_date = (first_day_of_expiry_month + timedelta(days=32)).replace(day=1)
+
+            if datetime.now() >= effective_expiry_date:
                 return json.dumps({
                     "proactive_alert": "expiring_card",
-                    "details": f"O cartão {pm['brand']} com final {pm['last4']} expira no próximo mês."
+                    "details": f"O cartão {pm['brand']} com final {pm['last4']} (expirado em {expiry_month}/{expiry_year}) não é mais válido."
                 })
     return "Nenhum alerta proativo imediato."
 
@@ -101,6 +106,37 @@ def analyze_suspicious_transaction(user_id: str, transaction_id: str) -> str:
 
     return json.dumps(analysis_result)
 
+def add_payment_method(user_id: str, card_number: str, expiry_date: str, cvv: str, brand: str) -> str:
+    """
+    Adiciona um novo cartão de crédito como método de pagamento após validá-lo.
+    Requer o número do cartão (card_number), data de validade (expiry_date no formato AAAA-MM), cvv e a bandeira (brand).
+    """
+    print(f"🤖 Concierge: Recebida solicitação para adicionar novo cartão para {user_id}.")
+    guardian_agent = GuardianAgent()
+
+    card_details = {"number": card_number, "expiry_date": expiry_date, "cvv": cvv}
+    validation_result = guardian_agent.validate_new_card(card_details)
+
+    if not validation_result["is_valid"]:
+        return f"Não foi possível adicionar o cartão. Motivos: {'; '.join(validation_result['reasons'])}"
+
+    db = read_database()
+    user = db.get(user_id)
+    if not user:
+        return "Usuário não encontrado."
+
+    new_card = {
+        "id": f"cc_{brand.lower()}_{card_number[-4:]}",
+        "type": "credit_card",
+        "brand": brand,
+        "last4": card_number[-4:],
+        "expiry_date": expiry_date,
+        "added_date": datetime.now().isoformat()
+    }
+    user["payment_methods"].append(new_card)
+    write_database(db)
+    return f"Cartão {brand} com final {card_number[-4:]} adicionado com sucesso!"
+
 # --- 3. Classe e Factory do Agente ---
 
 class ConciergeAgent:
@@ -125,6 +161,11 @@ class ConciergeAgent:
                 name="Analisar Transação Suspeita",
                 func=lambda tool_input: analyze_suspicious_transaction(user_id=self.user_id, **ast.literal_eval(tool_input)),
                 description="Use quando o usuário reportar uma cobrança não reconhecida. Requer o ID da transação (transaction_id)."
+            ),
+            Tool(
+                name="Adicionar Método de Pagamento",
+                func=lambda tool_input: add_payment_method(user_id=self.user_id, **ast.literal_eval(tool_input)),
+                description="Útil para adicionar um novo cartão de crédito. Requer número do cartão (card_number), data de validade (expiry_date), cvv e bandeira (brand)."
             ),
         ]
 
