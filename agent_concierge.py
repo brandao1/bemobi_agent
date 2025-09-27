@@ -137,6 +137,56 @@ def add_payment_method(user_id: str, card_number: str, expiry_date: str, cvv: st
     write_database(db)
     return f"Cartão {brand} com final {card_number[-4:]} adicionado com sucesso!"
 
+def delete_payment_method(user_id: str, payment_method_id: str) -> str:
+    """Remove um método de pagamento do perfil do usuário. Requer o ID do método de pagamento (payment_method_id)."""
+    print(f"🤖 Concierge: Recebida solicitação para remover o método de pagamento {payment_method_id}.")
+    db = read_database()
+    user = db.get(user_id)
+    if not user:
+        return "Usuário não encontrado."
+
+    initial_len = len(user["payment_methods"])
+    user["payment_methods"] = [pm for pm in user["payment_methods"] if pm["id"] != payment_method_id]
+
+    if len(user["payment_methods"]) < initial_len:
+        write_database(db)
+        return f"Método de pagamento {payment_method_id} removido com sucesso."
+    else:
+        return f"Método de pagamento com ID {payment_method_id} não encontrado."
+
+def offer_invoice_installment(user_id: str, transaction_id: str) -> str:
+    """Verifica e oferece opções de parcelamento para uma fatura específica, com base no tempo de cliente."""
+    db = read_database()
+    user = db.get(user_id)
+    if not user:
+        return "Usuário não encontrado."
+
+    signup_date = datetime.fromisoformat(user["personal_info"]["signup_date"].replace('Z', '+00:00'))
+    tenure_days = (datetime.now(signup_date.tzinfo) - signup_date).days
+    tenure_years = tenure_days / 365
+
+    if tenure_years >= 2:
+        return f"Para a fatura {transaction_id}, como nosso cliente fiel há mais de 2 anos, oferecemos parcelamento em até 6x sem juros."
+    elif tenure_years >= 1:
+        return f"Para a fatura {transaction_id}, como nosso cliente há mais de 1 ano, oferecemos parcelamento em até 3x sem juros."
+    else:
+        return f"Para a fatura {transaction_id}, oferecemos a opção de parcelamento em 2x com uma pequena taxa."
+
+def check_subscription_promotions(user_id: str) -> str:
+    """Verifica promoções disponíveis para as assinaturas do usuário."""
+    db = read_database()
+    user = db.get(user_id)
+    if not user:
+        return "Usuário não encontrado."
+
+    signup_date = datetime.fromisoformat(user["personal_info"]["signup_date"].replace('Z', '+00:00'))
+    tenure_years = (datetime.now(signup_date.tzinfo) - signup_date).days / 365
+
+    if tenure_years >= 1 and any(sub['service_name'] == "Plano de Internet Premium" for sub in user['subscriptions']):
+        return "Detectei que você é um cliente fiel há mais de um ano! Como agradecimento, estamos oferecendo um desconto de 15% na sua próxima renovação do Plano de Internet Premium."
+    
+    return "No momento, não há novas promoções específicas para sua conta, mas avisaremos assim que houver!"
+
 # --- 3. Classe e Factory do Agente ---
 
 class ConciergeAgent:
@@ -166,6 +216,21 @@ class ConciergeAgent:
                 name="Adicionar Método de Pagamento",
                 func=lambda tool_input: add_payment_method(user_id=self.user_id, **ast.literal_eval(tool_input)),
                 description="Útil para adicionar um novo cartão de crédito. Requer número do cartão (card_number), data de validade (expiry_date), cvv e bandeira (brand)."
+            ),
+            Tool(
+                name="Remover Método de Pagamento",
+                func=lambda tool_input: delete_payment_method(user_id=self.user_id, **ast.literal_eval(tool_input)),
+                description="Útil para remover um cartão de crédito existente. Requer o ID do método de pagamento (payment_method_id). Para obter o ID, você pode primeiro usar a ferramenta 'Consultar Métodos de Pagamento'."
+            ),
+            Tool(
+                name="Oferecer Parcelamento de Fatura",
+                func=lambda tool_input: offer_invoice_installment(user_id=self.user_id, **ast.literal_eval(tool_input)),
+                description="Use esta ferramenta para verificar opções de parcelamento para uma fatura específica. Requer o ID da transação (transaction_id)."
+            ),
+            Tool(
+                name="Verificar Promoções de Assinatura",
+                func=lambda _: check_subscription_promotions(self.user_id),
+                description="Use esta ferramenta para verificar se existem promoções, descontos ou upgrades disponíveis para as assinaturas do usuário. Não requer argumentos."
             ),
         ]
 
