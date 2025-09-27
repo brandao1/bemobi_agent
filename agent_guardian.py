@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 # --- 1. Funções de Interação com a Base de Dados (customer_profile.json) ---
 
@@ -26,10 +25,10 @@ class GuardianAgent:
         risk_reasons = []
 
         # 1. Análise de Anomalia de Valor
-        risk_score, reasons = self._check_value_anomaly(user_profile, transaction_details, risk_score, risk_reasons)
+        risk_score, risk_reasons = self._check_value_anomaly(user_profile, transaction_details, risk_score, risk_reasons)
 
         # 2. Análise de Rede e Localização
-        risk_score, reasons = self._check_network_anomaly(user_profile, transaction_details, risk_score, risk_reasons)
+        risk_score, risk_reasons = self._check_network_anomaly(user_profile, transaction_details, risk_score, risk_reasons)
         
         # 3. Análise Comportamental (Simulada)
         risk_score, reasons = self._check_behavioral_anomaly(transaction_details, risk_score, risk_reasons)

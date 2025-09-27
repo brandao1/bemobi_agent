@@ -3,8 +3,12 @@
         "personal_info": {
             "name": "Maria Silva",
             "email": "maria.silva@example.com",
-            "address": "Rua das Flores, 123, São Paulo, SP",
+            "address": "Rua Santa Rosa, 20",
             "signup_date": "2023-01-15T10:30:00Z"
+        },
+        "proactive_alert": {
+            "type": "blocked_transaction",
+            "details": "Detectamos e bloqueamos uma tentativa de compra suspeita no valor de R$ 850,00 originada em Kiev, Ucrânia. Sua conta está segura."
         },
         "payment_methods": [
             {
@@ -29,7 +33,7 @@
                 "service_id": "isp_premium",
                 "service_name": "Plano de Internet Premium",
                 "status": "active",
-                "price_brl": 129.90,
+                "price_brl": 129.9,
                 "next_billing_date": "2025-10-15"
             }
         ],
@@ -38,7 +42,7 @@
                 "transaction_id": "txn_001",
                 "date": "2025-09-15T11:00:00Z",
                 "description": "Mensalidade Plano Premium",
-                "amount_brl": 129.90,
+                "amount_brl": 129.9,
                 "status": "paid",
                 "payment_method_id": "cc_visa_1234"
             },
@@ -46,17 +50,25 @@
                 "transaction_id": "txn_002",
                 "date": "2025-08-15T11:05:00Z",
                 "description": "Mensalidade Plano Premium",
-                "amount_brl": 129.90,
+                "amount_brl": 129.9,
                 "status": "paid",
                 "payment_method_id": "cc_visa_1234"
             }
         ],
         "behavioral_data": {
             "login_locations": [
-                {"ip": "189.12.34.56", "city": "São Paulo", "timestamp": "2025-09-25T18:00:00Z"},
-                {"ip": "189.12.34.56", "city": "São Paulo", "timestamp": "2025-09-20T12:00:00Z"}
+                {
+                    "ip": "189.12.34.56",
+                    "city": "S\u00e3o Paulo",
+                    "timestamp": "2025-09-25T18:00:00Z"
+                },
+                {
+                    "ip": "189.12.34.56",
+                    "city": "S\u00e3o Paulo",
+                    "timestamp": "2025-09-20T12:00:00Z"
+                }
             ],
-            "avg_transaction_value": 129.90,
+            "avg_transaction_value": 129.9,
             "time_on_payment_page_seconds": 45
         }
     }

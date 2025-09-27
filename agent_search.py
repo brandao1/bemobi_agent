@@ -1,24 +1,22 @@
 import os
+import sys
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import AgentType, initialize_agent, Tool
 from langchain_community.tools import DuckDuckGoSearchRun
-
-from langchain_google_genai import chat_models
-
-# Lista os modelos disponíveis
-
-print("Modelos disponíveis:", chat_models)
+from dotenv import load_dotenv
 
 # --- Configuração do Cérebro (LLM) ---
 
-# IMPORTANTE: Cole sua API key aqui. 
-# A forma mais segura é usar variáveis de ambiente, mas para um teste simples, pode ser direto.
-os.environ["GOOGLE_API_KEY"] = "" 
+# Carrega variáveis de ambiente do arquivo .env
+load_dotenv()
+
+if not os.getenv("GOOGLE_API_KEY"):
+    print("Erro: A variável de ambiente GOOGLE_API_KEY não está definida.")
+    sys.exit(1)
 
 # Inicializa o modelo Gemini do Google. 
 # A 'temperatura' controla a criatividade (0 = mais determinístico)
-
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
 
 # --- Configuração das Ferramentas ---
 
@@ -50,7 +48,7 @@ agent = initialize_agent(
 pergunta = input("Digite sua pergunta para o agente: ")
 
 # Executa o agente com a nossa pergunta
-resultado = agent.invoke(pergunta)
+resultado = agent.invoke({"input": pergunta})
 
 # --- Apresentação do Resultado ---
 print("\n\n--- RESPOSTA FINAL DO AGENTE ---")
