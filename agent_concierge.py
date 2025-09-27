@@ -1,123 +1,199 @@
 import os
+import json
+from datetime import datetime, timedelta
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import AgentType, initialize_agent, Tool
-from langchain_community.tools import DuckDuckGoSearchRun
+from langchain.memory import ConversationBufferMemory
 from faker import Faker
 
-from langchain_google_genai import chat_models
+# --- 1. Simulação do Ecossistema Bemobi ---
+# Em um ambiente real, estas informações viriam de bancos de dados e APIs.
 
-# Lista os modelos disponíveis
+fake = Faker('pt_BR')
 
-print("Modelos disponíveis:", chat_models)
+mock_database = {
+    "user_maria_123": {
+        "personal_info": {
+            "name": "Maria Silva",
+            "email": "maria.silva@example.com",
+            "address": "Rua das Flores, 123, São Paulo, SP"
+        },
+        "payment_methods": [
+            {
+                "id": "cc_visa_1234",
+                "type": "credit_card",
+                "brand": "Visa",
+                "last4": "1234",
+                "expiry_date": (datetime.now() + timedelta(days=25)).strftime('%Y-%m') # Expira no próximo mês
+            },
+            {
+                "id": "cc_master_5678",
+                "type": "credit_card",
+                "brand": "Mastercard",
+                "last4": "5678",
+                "expiry_date": (datetime.now() + timedelta(days=730)).strftime('%Y-%m')
+            }
+        ],
+        "subscriptions": [
+            {
+                "service_name": "Plano Bemobi Premium",
+                "status": "active",
+                "price_brl": 79.90,
+                "next_billing_date": (datetime.now() + timedelta(days=15)).strftime('%Y-%m-%d')
+            }
+        ],
+        "billing_history": [
+            {"date": (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'), "description": "Mensalidade Plano Premium", "amount_brl": 79.90, "status": "paid"},
+            {"date": (datetime.now() - timedelta(days=60)).strftime('%Y-%m-%d'), "description": "Mensalidade Plano Premium", "amount_brl": 79.90, "status": "paid"}
+        ]
+    }
+}
 
-# --- Configuração do Cérebro (LLM) ---
+# --- 2. Ferramentas do Agente Concierge ---
+# Funções que o agente pode executar para interagir com os dados do usuário.
 
-# IMPORTANTE: Cole sua API key aqui. 
-# A forma mais segura é usar variáveis de ambiente, mas para um teste simples, pode ser direto.
-os.environ["GOOGLE_API_KEY"] = "" 
+def get_user_context(user_id: str) -> str:
+    """
+    Verifica o contexto do usuário, como cartões expirando ou faturas em aberto.
+    Esta é a ferramenta que permite a proatividade do agente.
+    """
+    print(f"🤖 Verificando contexto para o usuário: {user_id}")
+    user = mock_database.get(user_id)
+    if not user:
+        return "Usuário não encontrado."
 
-# Inicializa o modelo Gemini do Google. 
-# A 'temperatura' controla a criatividade (0 = mais determinístico)
+    # Verifica cartões expirando
+    for pm in user["payment_methods"]:
+        if pm["type"] == "credit_card":
+            expiry_year, expiry_month = map(int, pm["expiry_date"].split('-'))
+            next_month = datetime.now() + timedelta(days=30)
+            if expiry_year == next_month.year and expiry_month == next_month.month:
+                return json.dumps({
+                    "proactive_alert": "expiring_card",
+                    "details": f"O cartão {pm['brand']} com final {pm['last4']} expira em breve."
+                })
+    return "Nenhum alerta proativo imediato."
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+def get_personal_info(user_id: str) -> str:
+    """Busca as informações pessoais de um usuário."""
+    print(f"🤖 Buscando informações de {user_id}")
+    return json.dumps(mock_database.get(user_id, {}).get("personal_info", {}))
 
-# --- Configuração das Ferramentas ---
+def update_personal_info(user_id: str, new_email: str = None, new_address: str = None) -> str:
+    """Atualiza o e-mail ou endereço de um usuário."""
+    print(f"🤖 Atualizando informações de {user_id}")
+    user = mock_database.get(user_id)
+    if not user:
+        return "Usuário não encontrado."
+    if new_email:
+        user["personal_info"]["email"] = new_email
+    if new_address:
+        user["personal_info"]["address"] = new_address
+    return f"Informações de {user['personal_info']['name']} atualizadas com sucesso."
 
-# Instancia a ferramenta de busca da web do DuckDuckGo
-search = DuckDuckGoSearchRun()
+def get_billing_history(user_id: str) -> str:
+    """Consulta o histórico de faturamento de um usuário."""
+    print(f"🤖 Consultando histórico de faturamento de {user_id}")
+    return json.dumps(mock_database.get(user_id, {}).get("billing_history", []))
 
-# Descrevemos as ferramentas em uma lista. O agente usará a descrição
-# para decidir qual ferramenta usar.
-tools = [
-    Tool(
-        name="Busca na Web",
-        func=search.run,
-        description="útil para pesquisar informações recentes na internet sobre qualquer tópico."
-    )
-]
+def manage_payment_methods(user_id: str, action: str, card_details: dict = None) -> str:
+    """Adiciona ou remove um método de pagamento."""
+    print(f"🤖 Gerenciando pagamentos para {user_id}")
+    user = mock_database.get(user_id)
+    if not user:
+        return "Usuário não encontrado."
+    if action == "add":
+        new_card = {
+            "id": f"cc_{fake.credit_card_provider().lower()}_{card_details['last4']}",
+            "type": "credit_card",
+            "brand": card_details['brand'],
+            "last4": card_details['last4'],
+            "expiry_date": card_details['expiry_date']
+        }
+        user["payment_methods"].append(new_card)
+        return f"Cartão {new_card['brand']} final {new_card['last4']} adicionado."
+    elif action == "remove":
+        user["payment_methods"] = [pm for pm in user["payment_methods"] if pm["last4"] != card_details["last4"]]
+        return f"Cartão com final {card_details['last4']} removido."
+    return "Ação inválida."
 
-# Inicializa o gerador de dados fake
-fake = Faker()
 
-# --- Ferramentas do Concierge ---
+# --- 3. Configuração do Agente ---
 
-def atualizar_informacoes_pessoais(nome, endereco, email):
-    return f"Informações atualizadas: Nome: {nome}, Endereço: {endereco}, Email: {email}"
+# Carrega a API Key do ambiente
+#api_key = os.getenv("GOOGLE_API_KEY")
+os.environ["GOOGLE_API_KEY"] = "AIzaSyA8AgoaSY_o0kq3nyFnsUVHUqWpY5hmMTM"
+#if not api_key:
+#    raise ValueError("A variável de ambiente GOOGLE_API_KEY não foi definida.")
 
-def gerenciar_metodos_pagamento(acao, metodo):
-    return f"Método de pagamento {acao}: {metodo}"
+# Inicializa o modelo de linguagem
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
 
-def consultar_historico_faturamento():
-    return "Histórico de faturamento: [Fatura 1, Fatura 2, Fatura 3]"
-
-def configurar_pagamento_recorrente(acao, detalhes):
-    return f"Pagamento recorrente {acao}: {detalhes}"
-
-def iniciar_conversa_proativa(nome, cartao):
-    return f"Olá, {nome}. Notei que seu cartão {cartao} expira em breve. Gostaria de atualizá-lo?"
-
-# Ferramentas descritas para o agente
+# Define a lista de ferramentas que o agente pode usar
 concierge_tools = [
-    Tool(
-        name="Atualizar Informações Pessoais",
-        func=lambda: atualizar_informacoes_pessoais(
-            fake.name(), fake.address(), fake.email()
-        ),
-        description="Atualiza informações pessoais, como endereço ou e-mail."
+    Tool.from_function(
+        func=get_user_context,
+        name="Verificar Contexto do Usuário",
+        description="Sempre use esta ferramenta primeiro para verificar se há alguma ação proativa a ser tomada para o usuário."
     ),
-    Tool(
-        name="Gerenciar Métodos de Pagamento",
-        func=lambda: gerenciar_metodos_pagamento("adicionado", "Cartão de Crédito"),
-        description="Adiciona, remove ou altera métodos de pagamento."
-    ),
-    Tool(
-        name="Consultar Histórico de Faturamento",
-        func=consultar_historico_faturamento,
-        description="Consulta o histórico de faturamento e solicita envio de faturas."
-    ),
-    Tool(
-        name="Configurar Pagamento Recorrente",
-        func=lambda: configurar_pagamento_recorrente("configurado", "Cartão Visa"),
-        description="Configura ou modifica agendamentos de pagamentos recorrentes."
-    ),
-    Tool(
-        name="Iniciar Conversa Proativa",
-        func=lambda: iniciar_conversa_proativa(fake.first_name(), "Visa com final 1234"),
-        description="Inicia uma conversa proativa com base em dados contextuais."
-    )
+    Tool.from_function(func=get_personal_info, name="Consultar Informações Pessoais", description="Útil para buscar o nome, e-mail ou endereço do usuário."),
+    Tool.from_function(func=update_personal_info, name="Atualizar Informações Pessoais", description="Útil para alterar o e-mail ou endereço do usuário."),
+    Tool.from_function(func=get_billing_history, name="Consultar Histórico de Faturamento", description="Útil para ver as faturas passadas do usuário."),
+    Tool.from_function(func=manage_payment_methods, name="Gerenciar Métodos de Pagamento", description="Útil para adicionar ou remover um método de pagamento. A ação pode ser 'add' ou 'remove'. Para 'add', forneça 'card_details' com 'brand', 'last4' e 'expiry_date'. Para 'remove', forneça 'card_details' com 'last4'."),
 ]
 
-# --- Criação e Execução do Agente ---
+# Define a "personalidade" e as instruções do agente
+# Este é o prompt que guia o comportamento do agente.
+agent_system_prompt = """
+Você é o Concierge, um assistente de IA da Bemobi, especialista em gerenciamento de contas.
+Sua personalidade é: prestativo, amigável e, acima de tudo, proativo.
 
-# 'initialize_agent' junta o cérebro (llm) com as ferramentas (tools).
-# O AgentType.ZERO_SHOT_REACT_DESCRIPTION usa o ciclo ReAct que explicamos.
-agent = initialize_agent(
-    tools, 
-    llm, 
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, 
-    verbose=True # 'verbose=True' nos mostra o "pensamento" do agente passo a passo
-)
+Seu objetivo principal é transformar o autoatendimento em uma experiência fácil e guiada.
 
-# A pergunta que queremos que o agente responda
-pergunta = input("Digite sua pergunta para o agente: ")
+**Instruções Críticas:**
+1.  **Seja Proativo:** Ao iniciar uma conversa, SEMPRE use a ferramenta "Verificar Contexto do Usuário" primeiro para ver se há algum problema iminente (como um cartão expirando). Se houver, inicie a conversa abordando esse ponto diretamente.
+2.  **Use Linguagem Natural:** Fale com o usuário de forma clara e conversacional, como um humano faria. Evite jargões técnicos.
+3.  **Guie o Usuário:** Não espere apenas por comandos. Se um usuário fizer uma pergunta vaga como "meu pagamento", use as ferramentas para descobrir o problema e ofereça uma solução.
+4.  **Confirme Ações:** Antes de executar uma ação que altere dados (como adicionar um cartão), confirme com o usuário.
+5.  **ID do Usuário:** Todas as funções exigem um `user_id`. Para esta simulação, use sempre o ID `user_maria_123`.
+"""
 
-# Executa o agente com a nossa pergunta
-resultado = agent.invoke(pergunta)
+# Configura a memória para que o agente se lembre do histórico da conversa
+memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
-# --- Apresentação do Resultado ---
-print("\n\n--- RESPOSTA FINAL DO AGENTE ---")
-print(resultado)
-
-# --- Criação do Agente Concierge ---
+# Inicializa o agente
 concierge_agent = initialize_agent(
     concierge_tools,
     llm,
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True
+    agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,
+    verbose=True,
+    memory=memory,
+    agent_kwargs={
+        "system_message": agent_system_prompt
+    }
 )
 
-# --- Testando o Agente ---
-print("\n--- TESTANDO O AGENTE CONCIERGE ---")
-for tool in concierge_tools:
-    print(f"\nExecutando ferramenta: {tool.name}")
-    print(tool.func())
+
+# --- 4. Execução e Interação ---
+
+print("--- Agente Concierge da Bemobi ---")
+print("Iniciando simulação para a usuária Maria Silva (user_maria_123)...")
+print("Digite 'sair' para terminar.")
+
+# O agente inicia a conversa de forma proativa
+initial_prompt = "Olá, sou o Concierge da Bemobi. Como posso ajudar hoje?"
+print(f"\nConcierge: {initial_prompt}")
+
+# O agente "pensa" sobre a saudação inicial e verifica o contexto
+# A instrução no prompt o força a usar a ferramenta de contexto primeiro.
+response = concierge_agent.invoke({"input": "Um cliente iniciou a conversa."})
+print(f"Concierge: {response['output']}\n")
+
+
+while True:
+    user_input = input("Você: ")
+    if user_input.lower() == 'sair':
+        break
+
+    response = concierge_agent.invoke({"input": user_input})
+    print(f"Concierge: {response['output']}\n")
