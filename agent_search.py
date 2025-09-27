@@ -13,7 +13,7 @@ print("Modelos disponíveis:", chat_models)
 
 # IMPORTANTE: Cole sua API key aqui. 
 # A forma mais segura é usar variáveis de ambiente, mas para um teste simples, pode ser direto.
-os.environ["GOOGLE_API_KEY"] = "AIzaSyA8AgoaSY_o0kq3nyFnsUVHUqWpY5hmMTM" 
+os.environ["GOOGLE_API_KEY"] = "" 
 
 # Inicializa o modelo Gemini do Google. 
 # A 'temperatura' controla a criatividade (0 = mais determinístico)
