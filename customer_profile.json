@@ -1,0 +1,63 @@
+{
+    "user_maria_123": {
+        "personal_info": {
+            "name": "Maria Silva",
+            "email": "maria.silva@example.com",
+            "address": "Rua das Flores, 123, São Paulo, SP",
+            "signup_date": "2023-01-15T10:30:00Z"
+        },
+        "payment_methods": [
+            {
+                "id": "cc_visa_1234",
+                "type": "credit_card",
+                "brand": "Visa",
+                "last4": "1234",
+                "expiry_date": "2025-10",
+                "added_date": "2023-01-15T10:30:00Z"
+            },
+            {
+                "id": "cc_master_5678",
+                "type": "credit_card",
+                "brand": "Mastercard",
+                "last4": "5678",
+                "expiry_date": "2027-08",
+                "added_date": "2024-05-20T15:00:00Z"
+            }
+        ],
+        "subscriptions": [
+            {
+                "service_id": "isp_premium",
+                "service_name": "Plano de Internet Premium",
+                "status": "active",
+                "price_brl": 129.90,
+                "next_billing_date": "2025-10-15"
+            }
+        ],
+        "billing_history": [
+            {
+                "transaction_id": "txn_001",
+                "date": "2025-09-15T11:00:00Z",
+                "description": "Mensalidade Plano Premium",
+                "amount_brl": 129.90,
+                "status": "paid",
+                "payment_method_id": "cc_visa_1234"
+            },
+            {
+                "transaction_id": "txn_002",
+                "date": "2025-08-15T11:05:00Z",
+                "description": "Mensalidade Plano Premium",
+                "amount_brl": 129.90,
+                "status": "paid",
+                "payment_method_id": "cc_visa_1234"
+            }
+        ],
+        "behavioral_data": {
+            "login_locations": [
+                {"ip": "189.12.34.56", "city": "São Paulo", "timestamp": "2025-09-25T18:00:00Z"},
+                {"ip": "189.12.34.56", "city": "São Paulo", "timestamp": "2025-09-20T12:00:00Z"}
+            ],
+            "avg_transaction_value": 129.90,
+            "time_on_payment_page_seconds": 45
+        }
+    }
+}
