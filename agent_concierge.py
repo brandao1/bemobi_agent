@@ -53,10 +53,8 @@ mock_database = {
 # Funções que o agente pode executar para interagir com os dados do usuário.
 
 def get_user_context(user_id: str) -> str:
-    """
-    Verifica o contexto do usuário, como cartões expirando ou faturas em aberto.
-    Esta é a ferramenta que permite a proatividade do agente.
-    """
+    """Verifica o contexto do usuário, como cartões expirando ou faturas em aberto. Use esta ferramenta primeiro."""
+    user_id = "user_maria_123"
     print(f"🤖 Verificando contexto para o usuário: {user_id}")
     user = mock_database.get(user_id)
     if not user:
@@ -75,7 +73,8 @@ def get_user_context(user_id: str) -> str:
     return "Nenhum alerta proativo imediato."
 
 def get_personal_info(user_id: str) -> str:
-    """Busca as informações pessoais de um usuário."""
+    """Busca as informações pessoais do usuário atual."""
+    user_id = "user_maria_123"
     print(f"🤖 Buscando informações de {user_id}")
     return json.dumps(mock_database.get(user_id, {}).get("personal_info", {}))
 
@@ -93,6 +92,7 @@ def update_personal_info(user_id: str, new_email: str = None, new_address: str =
 
 def get_billing_history(user_id: str) -> str:
     """Consulta o histórico de faturamento de um usuário."""
+    user_id = "user_maria_123"
     print(f"🤖 Consultando histórico de faturamento de {user_id}")
     return json.dumps(mock_database.get(user_id, {}).get("billing_history", []))
 
