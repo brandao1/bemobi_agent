@@ -63,3 +63,6 @@ python main.py
 ```
 
 Você poderá então conversar com o agente no seu terminal. Para encerrar a conversa, digite `sair`.
+
+Segue o diagrama com as funcionalidades totais
+<img width="1415" height="1409" alt="Diagrama" src="https://github.com/user-attachments/assets/9ba3bf92-181e-4d5f-baa8-7aa45bcb82af" />
