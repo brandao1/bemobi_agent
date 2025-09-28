@@ -6,14 +6,15 @@
             "address": "Rua Santa Rosa, 20",
             "signup_date": "2023-01-15T10:30:00Z"
         },
+        "preferred_payment_method_id": "pm_pix_002",
         "payment_methods": [
             {
-                "id": "cc_visa_1234",
-                "type": "credit_card",
-                "brand": "Visa",
-                "last4": "1234",
-                "expiry_date": "2024-08",
-                "added_date": "2023-01-15T10:30:00Z"
+                "id": "pm_boleto_001",
+                "type": "boleto"
+            },
+            {
+                "id": "pm_pix_002",
+                "type": "pix"
             },
             {
                 "id": "cc_master_5678",
@@ -22,14 +23,6 @@
                 "last4": "5678",
                 "expiry_date": "2027-08",
                 "added_date": "2024-05-20T15:00:00Z"
-            },
-            {
-                "id": "cc_elo_4844",
-                "type": "credit_card",
-                "brand": "Elo",
-                "last4": "4844",
-                "expiry_date": "2028-12",
-                "added_date": "2025-09-27T19:02:36.151639"
             }
         ],
         "subscriptions": [
@@ -38,7 +31,7 @@
                 "service_name": "Plano de Internet Premium",
                 "status": "active",
                 "price_brl": 129.9,
-                "next_billing_date": "2025-10-15"
+                "next_billing_date": "2024-09-29"
             }
         ],
         "billing_history": [
@@ -56,6 +49,14 @@
                 "description": "Mensalidade Plano Premium",
                 "amount_brl": 129.9,
                 "status": "paid",
+                "payment_method_id": "cc_visa_1234"
+            },
+            {
+                "transaction_id": "txn_003",
+                "date": "2025-10-15T11:00:00Z",
+                "description": "Mensalidade Plano Premium",
+                "amount_brl": 129.9,
+                "status": "unpaid",
                 "payment_method_id": "cc_visa_1234"
             }
         ],

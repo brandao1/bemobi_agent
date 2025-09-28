@@ -20,7 +20,7 @@ def main():
     user_id_sim = "user_maria_123"
 
     print("="*50)
-    print(f"🚀 Iniciando Simulação com o Agente Concierge para o usuário: {user_id_sim}")
+    print(f"🚀 Iniciando Simulação com a Agente Grace para o usuário: {user_id_sim}")
     print("="*50)
 
     # Cria uma instância do agente para o usuário específico
@@ -28,20 +28,20 @@ def main():
 
     # --- Simulação de Conversa ---
 
-    # 1. O agente começa a conversa de forma proativa
+    # 1. A agente começa a conversa de forma proativa
     print("\n--- Início da Conversa ---")
     initial_response = concierge.run("Olá")
-    print(f"🤖 Concierge: {initial_response}")
+    print(f"🤖 {initial_response}") # O nome "Grace" já virá na resposta do agente
     print("(Digite 'sair' para encerrar a conversa)")
 
     # 2. Loop para conversa contínua
     while True:
         user_query = input("👤 Usuário: ")
         if user_query.lower() in ["sair", "exit", "quit"]:
-            print("🤖 Concierge: Até logo! Fico à disposição se precisar de algo mais.")
+            print("🤖 Grace: Até logo! Fico à disposição se precisar de algo mais.")
             break
         response = concierge.run(user_query)
-        print(f"🤖 Concierge: {response}")
+        print(f"🤖 {response}")
 
 if __name__ == "__main__":
     main()

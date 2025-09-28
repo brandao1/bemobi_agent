@@ -24,7 +24,7 @@ def write_database(data):
 
 def get_user_context(user_id: str) -> str:
     """Verifica o contexto do usuário, como cartões expirando. Use sempre no início da conversa."""
-    print(f"🤖 Concierge: Verificando contexto para {user_id}")
+    print(f"🤖 Grace: Verificando contexto para {user_id}")
     db = read_database()
     user = db.get(user_id)
     if not user:
@@ -78,35 +78,45 @@ def get_user_context(user_id: str) -> str:
 
 def get_personal_info(user_id: str) -> str:
     """Busca as informações pessoais de um usuário."""
-    print(f"🤖 Concierge: Buscando informações de {user_id}")
+    print(f"🤖 Grace: Buscando informações de {user_id}")
     db = read_database()
-    return json.dumps(db.get(user_id, {}).get("personal_info", {}))
+    result = db.get(user_id, {}).get("personal_info", {})
+    return json.dumps({"agent_source": "Agente Concierge", "result": result})
 
 def update_personal_info(user_id: str, new_email: str = None, new_address: str = None) -> str:
     """Atualiza o e-mail ou endereço de um usuário."""
-    print(f"🤖 Concierge: Atualizando informações de {user_id}")
+    print(f"🤖 Grace: Atualizando informações de {user_id}")
     db = read_database()
     user = db.get(user_id)
     if not user:
-        return "Usuário não encontrado."
+        return json.dumps({"agent_source": "Agente Concierge", "result": "Usuário não encontrado."})
     if new_email:
         user["personal_info"]["email"] = new_email
     if new_address:
         user["personal_info"]["address"] = new_address
     write_database(db)
-    return f"Informações de {user['personal_info']['name']} atualizadas com sucesso."
+    return json.dumps({"agent_source": "Agente Concierge", "result": f"Informações de {user['personal_info']['name']} atualizadas com sucesso."})
 
 def get_payment_methods(user_id: str) -> str:
     """Consulta os métodos de pagamento de um usuário."""
-    print(f"🤖 Concierge: Consultando métodos de pagamento de {user_id}")
+    print(f"🤖 Grace: Consultando métodos de pagamento de {user_id}")
     db = read_database()
-    return json.dumps(db.get(user_id, {}).get("payment_methods", []))
+    result = db.get(user_id, {}).get("payment_methods", [])
+    return json.dumps({"agent_source": "Agente Concierge", "result": result})
 
 def get_billing_history(user_id: str) -> str:
     """Consulta o histórico de faturamento de um usuário."""
-    print(f"🤖 Concierge: Consultando histórico de faturamento de {user_id}")
+    print(f"🤖 Grace: Consultando histórico de faturamento de {user_id}")
     db = read_database()
-    return json.dumps(db.get(user_id, {}).get("billing_history", []))
+    result = db.get(user_id, {}).get("billing_history", [])
+    return json.dumps({"agent_source": "Agente Concierge", "result": result})
+
+def get_subscriptions(user_id: str) -> str:
+    """Consulta as assinaturas e serviços ativos de um usuário."""
+    print(f"🤖 Grace: Consultando assinaturas de {user_id}")
+    db = read_database()
+    result = db.get(user_id, {}).get("subscriptions", [])
+    return json.dumps({"agent_source": "Agente Concierge", "result": result})
 
 def analyze_suspicious_transaction(user_id: str, transaction_id: str) -> str:
     """
@@ -114,37 +124,46 @@ def analyze_suspicious_transaction(user_id: str, transaction_id: str) -> str:
     Use esta ferramenta quando o usuário reportar uma cobrança que não reconhece.
     Requer o ID da transação.
     """
-    print(f"🤖 Concierge: Acionando Guardian para análise da transação {transaction_id}")
+    print(f"🤖 Grace: Acionando Guardian para análise da transação {transaction_id}")
     db = read_database()
     user_history = db.get(user_id, {}).get("billing_history", [])
     transaction_to_analyze = next((t for t in user_history if t["transaction_id"] == transaction_id), None)
 
     if not transaction_to_analyze:
-        return f"Transação com ID {transaction_id} não encontrada no histórico do usuário."
+        return json.dumps({
+            "agent_source": "Agente Concierge",
+            "result": f"Transação com ID {transaction_id} não encontrada no histórico do usuário."
+        })
 
     guardian_agent = GuardianAgent()
     analysis_result = guardian_agent.analyze_transaction(user_id, transaction_to_analyze)
 
-    return json.dumps(analysis_result)
+    return json.dumps({
+        "agent_source": "Agente Guardian",
+        "result": analysis_result
+    })
 
 def add_payment_method(user_id: str, card_number: str, expiry_date: str, cvv: str, brand: str) -> str:
     """
     Adiciona um novo cartão de crédito como método de pagamento após validá-lo.
     Requer o número do cartão (card_number), data de validade (expiry_date no formato AAAA-MM), cvv e a bandeira (brand).
     """
-    print(f"🤖 Concierge: Recebida solicitação para adicionar novo cartão para {user_id}.")
+    print(f"🤖 Grace: Recebida solicitação para adicionar novo cartão para {user_id}.")
     guardian_agent = GuardianAgent()
 
     card_details = {"number": card_number, "expiry_date": expiry_date, "cvv": cvv}
     validation_result = guardian_agent.validate_new_card(card_details)
 
     if not validation_result["is_valid"]:
-        return f"Não foi possível adicionar o cartão. Motivos: {'; '.join(validation_result['reasons'])}"
+        return json.dumps({
+            "agent_source": "Agente Guardian",
+            "result": f"Não foi possível adicionar o cartão. Motivos: {'; '.join(validation_result['reasons'])}"
+        })
 
     db = read_database()
     user = db.get(user_id)
     if not user:
-        return "Usuário não encontrado."
+        return json.dumps({"agent_source": "Agente Concierge", "result": "Usuário não encontrado."})
 
     new_card = {
         "id": f"cc_{brand.lower()}_{card_number[-4:]}",
@@ -156,57 +175,86 @@ def add_payment_method(user_id: str, card_number: str, expiry_date: str, cvv: st
     }
     user["payment_methods"].append(new_card)
     write_database(db)
-    return f"Cartão {brand} com final {card_number[-4:]} adicionado com sucesso!"
+    return json.dumps({
+        "agent_source": "Agente Concierge",
+        "result": f"Cartão {brand} com final {card_number[-4:]} adicionado com sucesso!"
+    })
 
 def delete_payment_method(user_id: str, payment_method_id: str) -> str:
     """Remove um método de pagamento do perfil do usuário. Requer o ID do método de pagamento (payment_method_id)."""
-    print(f"🤖 Concierge: Recebida solicitação para remover o método de pagamento {payment_method_id}.")
+    print(f"🤖 Grace: Recebida solicitação para remover o método de pagamento {payment_method_id}.")
     db = read_database()
     user = db.get(user_id)
     if not user:
-        return "Usuário não encontrado."
+        return json.dumps({"agent_source": "Agente Concierge", "result": "Usuário não encontrado."})
 
     initial_len = len(user["payment_methods"])
     user["payment_methods"] = [pm for pm in user["payment_methods"] if pm["id"] != payment_method_id]
 
     if len(user["payment_methods"]) < initial_len:
         write_database(db)
-        return f"Método de pagamento {payment_method_id} removido com sucesso."
+        return json.dumps({"agent_source": "Agente Concierge", "result": f"Método de pagamento {payment_method_id} removido com sucesso."})
     else:
-        return f"Método de pagamento com ID {payment_method_id} não encontrado."
+        return json.dumps({"agent_source": "Agente Concierge", "result": f"Método de pagamento com ID {payment_method_id} não encontrado."})
 
 def offer_invoice_installment(user_id: str, transaction_id: str) -> str:
     """Verifica e oferece opções de parcelamento para uma fatura específica, com base no tempo de cliente."""
     db = read_database()
     user = db.get(user_id)
     if not user:
-        return "Usuário não encontrado."
+        return json.dumps({"agent_source": "Agente Concierge", "result": "Usuário não encontrado."})
 
     signup_date = datetime.fromisoformat(user["personal_info"]["signup_date"].replace('Z', '+00:00'))
     tenure_days = (datetime.now(signup_date.tzinfo) - signup_date).days
     tenure_years = tenure_days / 365
 
+    message = ""
     if tenure_years >= 2:
-        return f"Para a fatura {transaction_id}, como nosso cliente fiel há mais de 2 anos, oferecemos parcelamento em até 6x sem juros."
+        message = f"Para a fatura {transaction_id}, como nosso cliente fiel há mais de 2 anos, oferecemos parcelamento em até 6x sem juros."
     elif tenure_years >= 1:
-        return f"Para a fatura {transaction_id}, como nosso cliente há mais de 1 ano, oferecemos parcelamento em até 3x sem juros."
+        message = f"Para a fatura {transaction_id}, como nosso cliente há mais de 1 ano, oferecemos parcelamento em até 3x sem juros."
     else:
-        return f"Para a fatura {transaction_id}, oferecemos a opção de parcelamento em 2x com uma pequena taxa."
+        message = f"Para a fatura {transaction_id}, oferecemos a opção de parcelamento em 2x com uma pequena taxa."
+    
+    return json.dumps({"agent_source": "Agente Concierge", "result": message})
 
 def check_subscription_promotions(user_id: str) -> str:
     """Verifica promoções disponíveis para as assinaturas do usuário."""
     db = read_database()
     user = db.get(user_id)
     if not user:
-        return "Usuário não encontrado."
+        return json.dumps({"agent_source": "Agente Concierge", "result": "Usuário não encontrado."})
 
     signup_date = datetime.fromisoformat(user["personal_info"]["signup_date"].replace('Z', '+00:00'))
     tenure_years = (datetime.now(signup_date.tzinfo) - signup_date).days / 365
 
+    message = ""
     if tenure_years >= 1 and any(sub['service_name'] == "Plano de Internet Premium" for sub in user['subscriptions']):
-        return "Detectei que você é um cliente fiel há mais de um ano! Como agradecimento, estamos oferecendo um desconto de 15% na sua próxima renovação do Plano de Internet Premium."
+        message = "Detectei que você é um cliente fiel há mais de um ano! Como agradecimento, estamos oferecendo um desconto de 15% na sua próxima renovação do Plano de Internet Premium."
+    else:
+        message = "No momento, não há novas promoções específicas para sua conta, mas avisaremos assim que houver!"
     
-    return "No momento, não há novas promoções específicas para sua conta, mas avisaremos assim que houver!"
+    return json.dumps({"agent_source": "Agente Concierge", "result": message})
+
+def set_preferred_payment_method(user_id: str, payment_method_id: str) -> str:
+    """Define ou altera o método de pagamento preferencial de um usuário para cobranças recorrentes. Requer o ID do método de pagamento (payment_method_id)."""
+    print(f"🤖 Grace: Alterando método de pagamento preferencial para {payment_method_id}.")
+    db = read_database()
+    user = db.get(user_id)
+    if not user:
+        return json.dumps({"agent_source": "Agente Concierge", "result": "Usuário não encontrado."})
+
+    # Verifica se o método de pagamento existe para o usuário
+    available_pm_ids = [pm["id"] for pm in user["payment_methods"]]
+    if payment_method_id not in available_pm_ids:
+        return json.dumps({"agent_source": "Agente Concierge", "result": f"Método de pagamento com ID '{payment_method_id}' não encontrado. Os IDs disponíveis são: {available_pm_ids}."})
+
+    user["preferred_payment_method_id"] = payment_method_id
+    write_database(db)
+
+    # Encontra o tipo do método para a mensagem de confirmação
+    pm_type = next((pm["type"] for pm in user["payment_methods"] if pm["id"] == payment_method_id), "desconhecido")
+    return json.dumps({"agent_source": "Agente Concierge", "result": f"Tudo certo! Seu método de pagamento preferencial foi alterado para {pm_type.upper()} (ID: {payment_method_id}). As próximas cobranças serão feitas por ele."})
 
 # --- 3. Classe e Factory do Agente ---
 
@@ -228,6 +276,7 @@ class ConciergeAgent:
             ),
             Tool.from_function(func=lambda _: get_payment_methods(self.user_id), name="Consultar Métodos de Pagamento", description="Útil para listar os métodos de pagamento do usuário. Não requer argumentos."),
             Tool.from_function(func=lambda _: get_billing_history(self.user_id), name="Consultar Histórico de Faturamento", description="Útil para ver as faturas passadas do usuário. Não requer argumentos."),
+            Tool.from_function(func=lambda _: get_subscriptions(self.user_id), name="Consultar Assinaturas Ativas", description="Útil para listar os serviços e assinaturas ativas do usuário. Não requer argumentos."),
             Tool(
                 name="Analisar Transação Suspeita",
                 func=lambda tool_input: analyze_suspicious_transaction(user_id=self.user_id, **ast.literal_eval(tool_input)),
@@ -253,17 +302,23 @@ class ConciergeAgent:
                 func=lambda _: check_subscription_promotions(self.user_id),
                 description="Use esta ferramenta para verificar se existem promoções, descontos ou upgrades disponíveis para as assinaturas do usuário. Não requer argumentos."
             ),
+            Tool(
+                name="Definir Método de Pagamento Preferencial",
+                func=lambda tool_input: set_preferred_payment_method(user_id=self.user_id, **ast.literal_eval(tool_input)),
+                description="Use para alterar o método de pagamento principal do usuário para futuras cobranças. Requer o ID do método de pagamento (payment_method_id). Para obter o ID, consulte primeiro os métodos de pagamento disponíveis."
+            ),
         ]
 
         agent_system_prompt = f"""
-        Você é o Concierge, um assistente de IA da Bemobi para o usuário {self.user_id}.
+        Você é a Grace, uma assistente de IA da Bemobi para o usuário {self.user_id}.
         Sua personalidade é: prestativo, amigável e, acima de tudo, proativo.
         Seu objetivo é transformar o autoatendimento em uma experiência fácil e guiada.
 
         **Instruções Críticas:**
         1.  **Seja Proativo:** Ao iniciar, SEMPRE use a ferramenta "Verificar Contexto do Usuário" para ver se há algum problema iminente (como um cartão expirando). Se houver, inicie a conversa abordando esse ponto.
-        2.  **Use o ID do Usuário:** Todas as ferramentas já estão configuradas para usar o ID '{self.user_id}'. Você só precisa passar os outros argumentos necessários, como 'new_email' ou 'transaction_id'.
-        3.  **Fale com Clareza:** Use linguagem natural e evite jargões.
+        2.  **Atribuição de Agente:** Algumas ferramentas retornam um JSON com "agent_source" e "result". Ao formular sua resposta final, se "agent_source" estiver presente, comece sua resposta com "Grace(Nome do Agente): ". Por exemplo: "Grace(Agente Guardian): Analisei a transação e o risco é baixo.". Se a ferramenta não retornar "agent_source", responda normalmente como "Grace:".
+        3.  **Use o ID do Usuário:** Todas as ferramentas já estão configuradas para usar o ID '{self.user_id}'. Você só precisa passar os outros argumentos necessários, como 'new_email' ou 'transaction_id'.
+        4.  **Fale com Clareza:** Use linguagem natural e evite jargões.
         """
 
         return initialize_agent(
