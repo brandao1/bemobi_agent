@@ -1,67 +1,65 @@
-# Projeto de Agentes de IA - Bemobi
+# Projeto Aegis
 
-Este projeto demonstra a implementação e integração de dois agentes de IA, **Concierge** e **Guardian**, para aprimorar a jornada do cliente em uma plataforma de serviços.
+O Projeto Aegis é um ecossistema multiagente de IA projetado para revolucionar a jornada do cliente para a Bemobi. Este protótipo, desenvolvido para um hackathon, demonstra como agentes de IA especializados podem orquestrar de forma inteligente todo o ciclo de vida do cliente, desde o onboarding até a retenção.
 
-## Arquitetura
+## Sobre
 
-O projeto é composto por três componentes principais:
+Aegis atua como uma camada de orquestração inteligente sobre a infraestrutura existente da Bemobi, com a missão de fortalecer a segurança das transações e apoiar proativamente o cliente em cada etapa de sua jornada. A visão é elevar a Bemobi de um provedor de ferramentas de pagamento para um orquestrador autônomo e preditivo do ciclo de vida do cliente.
 
-1.  **Agente Concierge (`agent_concierge.py`)**:
-    *   **Tecnologia**: LangChain com o modelo `gemini-1.5-pro-latest`.
-    *   **Função**: É o ponto de contato principal com o usuário. Ele é projetado para ser um assistente proativo e prestativo, capaz de realizar tarefas de autoatendimento como consultar dados, atualizar informações e, crucialmente, identificar e agir sobre possíveis problemas (ex: um cartão de crédito prestes a expirar).
-    *   **Integração**: O Concierge possui uma ferramenta que lhe permite invocar o Agente Guardian para analisar transações que o usuário reporte como suspeitas.
+## Os Agentes
 
-2.  **Agente Guardian (`agent_guardian.py`)**:
-    *   **Tecnologia**: Lógica de negócios em Python (baseada em regras).
-    *   **Função**: É um serviço especializado em análise de risco. Ele recebe os detalhes de uma transação e, com base no perfil e histórico do usuário, calcula um score de risco e identifica os motivos. Ele não interage diretamente com o usuário.
+O ecossistema é composto por seis agentes especializados:
 
-3.  **Orquestrador da Simulação (`main.py`)**:
-    *   **Função**: Este script inicializa o ambiente, cria uma instância do Agente Concierge para um usuário simulado e conduz um diálogo que demonstra a colaboração entre os agentes.
+*   **Gatekeeper:** Automatiza o processo de onboarding de novos clientes com verificação de identidade segura e instantânea.
+*   **Concierge:** Uma IA conversacional para autoatendimento e gerenciamento de contas.
+*   **Guardian:** Um motor de detecção de fraude em tempo real que opera em segundo plano.
+*   **Dynamo:** Otimiza as taxas de sucesso de pagamento e oferece opções de pagamento dinâmicas.
+*   **Oracle:** Um agente de análise preditiva que calcula a probabilidade de churn e prevê possíveis falhas de pagamento.
+*   **Ambassador:** Atua com base na inteligência preditiva do Oracle para gerenciar proativamente o relacionamento com o cliente.
 
-4.  **Base de Dados Simulada (`customer_profile.json`)**:
-    *   Um arquivo JSON que simula um banco de dados de clientes, contendo informações pessoais, métodos de pagamento, histórico de faturamento e dados comportamentais.
+## Começando
 
-## Como Configurar e Executar
-
-Siga os passos abaixo para rodar a simulação.
+Estas instruções permitirão que você tenha uma cópia do projeto em funcionamento em sua máquina local para fins de desenvolvimento e teste.
 
 ### Pré-requisitos
 
-*   Python 3.9 ou superior.
-*   Uma chave de API do Google para acesso aos modelos Gemini. Você pode obter uma no Google AI Studio.
+*   Python 3.9 ou superior
+*   Pip (gerenciador de pacotes do Python)
 
-### 1. Instalação das Dependências
+### Instalação
 
-Primeiro, instale as bibliotecas Python necessárias. É altamente recomendável usar um ambiente virtual (`venv`).
-
-```bash
-# Crie um ambiente virtual (opcional, mas recomendado)
-python -m venv venv
-source venv/bin/activate  # No Windows: venv\Scripts\activate
-
-# Instale as dependências
-pip install langchain langchain-google-genai google-generativeai langchain-community duckduckgo-search python-dotenv
-```
-
-### 2. Configuração da Chave de API
-
-A forma mais segura de gerenciar sua chave de API é através de variáveis de ambiente.
-
-1.  Crie um arquivo chamado `.env` na raiz do projeto (`c:\bemobi_agent\.env`).
-2.  Adicione a seguinte linha ao arquivo, substituindo `sua_chave_aqui` pela sua chave de API real:
-
-    ```
-    GOOGLE_API_KEY='sua_chave_aqui'
+1.  **Clone o repositório:**
+    ```sh
+    git clone <url-do-repositorio>
+    cd <diretorio-do-projeto>
     ```
 
-O script `main.py` carregará automaticamente esta variável.
+2.  **Crie e ative um ambiente virtual (recomendado):**
+    ```sh
+    python -m venv venv
+    # No Windows
+    venv\Scripts\activate
+    # No macOS/Linux
+    source venv/bin/activate
+    ```
 
-### 3. Executando a Simulação
+3.  **Instale as dependências:**
+    ```sh
+    pip install -r requirements.txt
+    ```
 
-Com tudo configurado, execute o script `main.py` a partir do seu terminal:
+4.  **Configure suas variáveis de ambiente:**
+    Crie um arquivo chamado `.env` na raiz do projeto e adicione sua chave da API do Google:
+    ```
+    GOOGLE_API_KEY='sua_chave_de_api_aqui'
+    ```
 
-```bash
+## Uso
+
+Para iniciar a simulação, execute o arquivo `main.py`. Isso iniciará uma interação de linha de comando com o Agente Concierge.
+
+```sh
 python main.py
 ```
 
-O script irá simular uma conversa entre um usuário e o Agente Concierge. Você verá no console os "pensamentos" do agente (as ferramentas que ele decide usar) e as respostas finais, incluindo o momento em que ele consulta o Agente Guardian para analisar uma transação.
+Você poderá então conversar com o agente no seu terminal. Para encerrar a conversa, digite `sair`.
