@@ -270,7 +270,7 @@ class ConciergeAgent:
             tools,
             self.llm,
             agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,
-            verbose=True,
+            verbose=False,
             memory=self.memory,
             handle_parsing_errors=True, # Adicionado para lidar com erros de formatação da saída do LLM
             agent_kwargs={
