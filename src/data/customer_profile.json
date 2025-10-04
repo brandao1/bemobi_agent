@@ -1,0 +1,114 @@
+{
+    "user_maria_123": {
+        "user_id": "user_maria_123",
+        "personal_info": {
+            "name": "Maria Silva",
+            "email": "maria.silva@example.com",
+            "address": "Rua das Flores, 123, Rio de Janeiro, RJ",
+            "signup_date": "2022-03-15T10:00:00Z"
+        },
+        "payment_methods": [
+            {
+                "id": "cc_visa_1234",
+                "type": "credit_card",
+                "brand": "Visa",
+                "last4": "1234",
+                "expiry_date": "2027-12",
+                "added_date": "2022-03-15T10:00:00Z"
+            },
+            {
+                "id": "cc_master_5678",
+                "type": "credit_card",
+                "brand": "Mastercard",
+                "last4": "5678",
+                "expiry_date": "2025-08",
+                "added_date": "2023-11-15T14:30:00Z"
+            },
+            {
+                "id": "pix_default",
+                "type": "pix",
+                "details": "Chave aleatória vinculada",
+                "added_date": "2024-05-20T18:00:00Z"
+            }
+        ],
+        "preferred_payment_method_id": "cc_visa_1234",
+        "subscriptions": [
+            {
+                "service_id": "net_ultra_500",
+                "service_name": "Plano Fibra Ultra 500MB",
+                "monthly_fee_brl": 149.90,
+                "next_billing_date": "2025-10-10"
+            },
+            {
+                "service_id": "tv_plus_hd",
+                "service_name": "Pacote de Canais Plus HD",
+                "monthly_fee_brl": 79.90,
+                "next_billing_date": "2025-10-15"
+            }
+        ],
+        "billing_history": [
+            {
+                "transaction_id": "txn_sep25_net",
+                "date": "2025-09-10",
+                "amount_brl": 149.90,
+                "description": "Mensalidade Plano Fibra",
+                "status": "success",
+                "location": "Rio de Janeiro",
+                "time_on_page_seconds": 35
+            },
+            {
+                "transaction_id": "txn_sep25_tv",
+                "date": "2025-09-15",
+                "amount_brl": 79.90,
+                "description": "Mensalidade Pacote de Canais",
+                "status": "failed",
+                "location": "Rio de Janeiro",
+                "time_on_page_seconds": 31
+            },
+            {
+                "transaction_id": "txn_aug25_net",
+                "date": "2025-08-10",
+                "amount_brl": 149.90,
+                "description": "Mensalidade Plano Fibra",
+                "status": "success",
+                "location": "Rio de Janeiro",
+                "time_on_page_seconds": 41
+            },
+            {
+                "transaction_id": "txn_aug25_tv",
+                "date": "2025-08-15",
+                "amount_brl": 79.90,
+                "description": "Mensalidade Pacote de Canais",
+                "status": "success",
+                "location": "Rio de Janeiro",
+                "time_on_page_seconds": 38
+            },
+            {
+                "transaction_id": "txn_jul25_net",
+                "date": "2025-07-10",
+                "amount_brl": 149.90,
+                "description": "Mensalidade Plano Fibra",
+                "status": "success",
+                "location": "Rio de Janeiro",
+                "time_on_page_seconds": 33
+            },
+            {
+                "transaction_id": "txn_strange_01",
+                "date": "2025-06-20",
+                "amount_brl": 850.00,
+                "description": "Compra de equipamento avulso",
+                "status": "success",
+                "location": "Curitiba",
+                "time_on_page_seconds": 3
+            }
+        ],
+        "behavioral_data": {
+            "avg_transaction_value": 180.00,
+            "login_locations": [
+                {"city": "Rio de Janeiro", "date": "2025-09-25"},
+                {"city": "Niterói", "date": "2025-09-18"}
+            ],
+            "last_activity_date": "2025-10-02T15:00:00Z"
+        }
+    }
+}

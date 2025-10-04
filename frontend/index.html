@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat com Grace - Simulação WhatsApp</title>
+    <style>
+        /* O CSS permanece exatamente o mesmo */
+        :root {
+            --whatsapp-green: #075E54;
+            --whatsapp-light-green: #25D366;
+            --outgoing-bg: #dcf8c6;
+            --incoming-bg: #ffffff;
+            --background-color: #e5ddd5;
+            --header-bg: #ededed;
+            --system-message-bg: #e1f2fb;
+        }
+        body {
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #dadbd3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+            width: 80%;
+            max-width: 1200px;
+            height: 95vh;
+            background-color: var(--background-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .chat-header {
+            background-color: var(--header-bg);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            border-left: 1px solid #ccc;
+        }
+        .chat-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .chat-header .contact-info h3 { margin: 0; font-weight: 500; }
+        .chat-header .contact-info p { margin: 0; font-size: 0.8em; color: #555; }
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px 5%;
+            overflow-y: auto;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-repeat: repeat;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            max-width: 65%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            position: relative;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .message.incoming { background-color: var(--incoming-bg); align-self: flex-start; }
+        .message.outgoing { background-color: var(--outgoing-bg); align-self: flex-end; }
+        .message .timestamp {
+            font-size: 0.7em;
+            color: #999;
+            float: right;
+            margin-top: 5px;
+            margin-left: 10px;
+            clear: both;
+        }
+        .chat-input-form {
+            background-color: var(--header-bg);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+        }
+        .chat-input-form input {
+            flex-grow: 1;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 20px;
+            font-size: 1em;
+        }
+        .chat-input-form input:focus { outline: none; }
+        .chat-input-form button {
+            background-color: var(--whatsapp-green);
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            margin-left: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .chat-input-form button svg { width: 24px; height: 24px; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            <img src="https://i.ibb.co/mG39f2W/bemobi-icon.png" alt="Grace Profile">
+            <div class="contact-info">
+                <h3>Grace (Bemobi)</h3>
+                <p>online</p>
+            </div>
+        </header>
+        <main class="chat-messages" id="chat-messages"></main>
+        <form class="chat-input-form" id="chat-form">
+            <input type="text" id="message-input" placeholder="Digite uma mensagem" autocomplete="off">
+            <button type="submit" id="send-button">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const chatForm = document.getElementById('chat-form');
+
+        // Função para adicionar uma mensagem à tela
+        function addMessage(text, type) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', type);
+            const textElement = document.createElement('span');
+            textElement.textContent = text;
+            const timeElement = document.createElement('span');
+            timeElement.classList.add('timestamp');
+            const now = new Date();
+            timeElement.innerText = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            messageElement.appendChild(textElement);
+            messageElement.appendChild(timeElement);
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // ====================== INÍCIO DA MUDANÇA ======================
+
+        // Nova função para enviar mensagem ao servidor Python
+        async function sendMessageToServer(message) {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                });
+                const data = await response.json();
+                return data.reply;
+            } catch (error) {
+                console.error("Erro ao conectar com o servidor:", error);
+                return "Desculpe, não consegui me conectar com meus sistemas agora. Por favor, tente novamente em um instante.";
+            }
+        }
+
+        // Event listener para o envio de mensagem (agora é 'async')
+        chatForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const userInput = messageInput.value.trim();
+            if (userInput) {
+                addMessage(userInput, 'outgoing');
+                messageInput.value = '';
+
+                // Mostra um indicador de "digitando..." (opcional)
+                const typingIndicator = "Grace está digitando...";
+                addMessage(typingIndicator, 'incoming');
+
+                // Envia a mensagem para o servidor REAL e espera a resposta
+                const graceResponse = await sendMessageToServer(userInput);
+                
+                // Remove o indicador de "digitando" e adiciona a resposta real
+                chatMessages.removeChild(chatMessages.lastChild); 
+                addMessage(graceResponse, 'incoming');
+            }
+        });
+        
+        // Adiciona a primeira mensagem proativa da Grace ao carregar a página
+        window.addEventListener('load', async () => {
+             addMessage("Conectando com a assistente Grace...", 'incoming');
+             // A primeira mensagem também vem do agente real agora!
+             const initialResponse = await sendMessageToServer("Olá");
+             chatMessages.removeChild(chatMessages.lastChild); 
+             addMessage(initialResponse, 'incoming');
+        });
+        
+        // ======================= FIM DA MUDANÇA ========================
+
+    </script>
+</body>
+</html>
